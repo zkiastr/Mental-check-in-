@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mental Wellness Check-In</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: #f0f8ff;
+    }
+    h1 {
+      color: #333;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+    }
+    textarea, select, input[type="number"] {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .tip {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #e6ffe6;
+      border: 1px solid #b3ffb3;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Mental Wellness Check-In</h1>
+
+  <form id="checkin-form">
+    <label for="mood">How is your mood today?</label>
+    <select id="mood">
+      <option value="Good">Good</option>
+      <option value="Neutral">Neutral</option>
+      <option value="Low">Low</option>
+    </select>
+
+    <label for="stress">How stressed are you? (1 = low, 10 = high)</label>
+    <input type="number" id="stress" min="1" max="10">
+
+    <label for="sleep">How many hours did you sleep?</label>
+    <input type="number" id="sleep" min="0" max="24">
+
+    <label for="notes">Any additional thoughts?</label>
+    <textarea id="notes"></textarea>
+
+    <button type="submit">Get My AI Tip</button>
+    <button type="button" onclick="exportData('csv')">Export as CSV</button>
+    <button type="button" onclick="exportData('json')">Export as JSON</button>
+  </form>
+
+  <div id="tip" class="tip" style="display: none;"></div>
+
+  <script>
+    const form = document.getElementById('checkin-form');
+    const tipDiv = document.getElementById('tip');
+    const history = [];
+
+    function generateTip(mood, stress, sleep) {
+      if (mood === 'Low' || stress > 7 || sleep < 6) {
+        return "You're under pressure. Try deep breathing or take a short walk. A short break might help reset your mind.";
+      } else if (mood === 'Neutral' || stress >= 4) {
+        return "You're doing okay. Consider scheduling a relaxing activity or chatting with a friend today.";
+      } else {
+        return "You seem well today! Keep up your good habits and consider helping a friend or journaling your wins.";
+      }
+    }
+
+    form.addEventListener('submit', function(event) {
+      event.preventDefault();
+      const mood = document.getElementById('mood').value;
+      const stress = parseInt(document.getElementById('stress').value);
+      const sleep = parseFloat(document.getElementById('sleep').value);
+      const notes = document.getElementById('notes').value;
+      const timestamp = new Date().toISOString();
+
+      const tip = generateTip(mood, stress, sleep);
+
+      tipDiv.innerText = tip;
+      tipDiv.style.display = 'block';
+
+      history.push({ timestamp, mood, stress, sleep, notes, tip });
+    });
+
+    function exportData(type) {
+      let dataStr;
+      let fileName;
+
+      if (type === 'json') {
+        dataStr = JSON.stringify(history, null, 2);
+        fileName = 'checkin_data.json';
+      } else {
+        const headers = 'timestamp,mood,stress,sleep,notes,tip\n';
+        const rows = history.map(h => `${h.timestamp},${h.mood},${h.stress},${h.sleep},"${h.notes.replace(/"/g, '""')}","${h.tip.replace(/"/g, '""')}"`).join('\n');
+        dataStr = headers + rows;
+        fileName = 'checkin_data.csv';
+      }
+
+      const blob = new Blob([dataStr], { type: 'text/plain' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = fileName;
+      a.click();
+    }
+  </script>
+</body>
+</html>
